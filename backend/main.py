@@ -21,7 +21,7 @@ app.add_middleware(
 )
 
 # Load YOLO model
-model_path = "runs/train/train_8m/weights/best.pt"
+model_path = "runs/train/train_8m/weights/best.pt" # Đường dẫn model đã fine-tune
 if not os.path.exists(model_path):
     model_path = "yolov8m.pt"  # Fallback to pretrained if no custom model
 try:
