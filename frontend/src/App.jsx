@@ -428,8 +428,6 @@ export default function App() {
     </div>
   );
 }
-
-    cursor: not-allowed; transform: none;
   
 
   
