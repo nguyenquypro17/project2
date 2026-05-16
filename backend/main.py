@@ -1,6 +1,7 @@
 # main.py
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 import numpy as np
 import cv2
 import os
@@ -9,6 +10,15 @@ from backend.paddle_ocr import read_plate
 import json
 
 app = FastAPI()
+
+# Thêm đoạn cấu hình CORS này vào
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Cho phép tất cả các domain gọi API (phù hợp lúc code)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Load YOLO model
 model_path = "runs/train/train_8m/weights/best.pt"
