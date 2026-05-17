@@ -6,24 +6,6 @@ from collections import Counter
 # Khởi tạo PaddleOCR
 ocr = PaddleOCR(use_angle_cls=True, lang='en')
 
-# Tiền xử lý ảnh trước OCR (CLAHE + Denoising + Perspective Correction)
-def preprocess_image(image):
-    # Chuyển sang grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    
-    # CLAHE - làm tương phản
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    contrast = clahe.apply(gray)
-    
-    # Denoising - giảm nhiễu
-    denoised = cv2.bilateralFilter(contrast, 9, 75, 75)
-    
-    # Perspective correction - sửa góc nhìn
-    # Dùng morphological operations để chuẩn bị trước khi sửa góc
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
-    morph = cv2.morphologyEx(denoised, cv2.MORPH_CLOSE, kernel)
-    
-    return morph
 
 # Validate biển số (không kiểm tra regex định dạng cụ thể)
 def validate_plate(text):
@@ -32,8 +14,7 @@ def validate_plate(text):
 
 # Đọc biển số từ 1 frame ảnh đã khoanh vùng
 def read_plate(image):
-    processed_img = preprocess_image(image)
-    result = ocr.ocr(processed_img, cls=True)
+    result = ocr.ocr(image)
     if not result or not result[0]: 
         return ""
     text = "".join([res[1][0] for res in result[0]]).replace(" ", "").replace("-", "").replace(".", "")
@@ -63,8 +44,7 @@ def test_pipeline(image_path):
     if image is None:
         return {"status": "failed", "plate": "", "error": f"Không thể đọc ảnh từ {image_path}"}
     
-    processed_img = preprocess_image(image)
-    result = ocr.ocr(processed_img, cls=True)
+    result = ocr.ocr(image)
     
     if not result or not result[0]:
         return {"status": "failed", "plate": "", "confidence": 0}
