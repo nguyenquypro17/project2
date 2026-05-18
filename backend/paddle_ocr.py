@@ -1,60 +1,38 @@
 import cv2
-import re
 from paddleocr import PaddleOCR
-from collections import Counter
 
-# Khởi tạo PaddleOCR
-ocr = PaddleOCR(use_angle_cls=True, lang='en')
+# Tắt các tính năng tự động xoay ảnh gây lỗi
+ocr = PaddleOCR(
+    lang='en', 
+    use_angle_cls=False,
+    use_doc_orientation_classify=False,
+    use_doc_unwarping=False
+)
 
-
-# Validate biển số (không kiểm tra regex định dạng cụ thể)
-def validate_plate(text):
-    # Chỉ kiểm tra chuỗi không rỗng và độ dài hợp lý
-    return len(text) > 0 and len(text) <= 10
-
-# Đọc biển số từ 1 frame ảnh đã khoanh vùng
 def read_plate(image):
-    result = ocr.ocr(image)
-    if not result or not result[0]: 
-        return ""
-    text = "".join([res[1][0] for res in result[0]]).replace(" ", "").replace("-", "").replace(".", "")
-    return text if validate_plate(text) else ""
-
-
-# Test pipeline đầu cuối: ảnh vào -> biển số ra
-def test_pipeline(image_path):
-    """
-    Test pipeline OCR lần lượt các bước:
-    1. Đọc ảnh từ đường dẫn
-    2. Tiền xử lý
-    3. OCR nhận dạng
-    4. Validate định dạng
+    # Phóng to ảnh gấp 2 lần để nét chữ rõ hơn
+    img_resized = cv2.resize(image, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
     
-    Args:
-        image_path (str): Đường dẫn đến ảnh biển số
+    try:
+        results = ocr.predict(img_resized)
+    except Exception:
+        results = ocr.ocr(img_resized)
+        
+    plate_text = ""
     
-    Returns:
-        dict: {
-            "status": "success" hoặc "failed",
-            "plate": biển số (nếu valid) hoặc "",
-            "confidence": độ tin cây (%)
-        }
-    """
-    image = cv2.imread(image_path)
-    if image is None:
-        return {"status": "failed", "plate": "", "error": f"Không thể đọc ảnh từ {image_path}"}
-    
-    result = ocr.ocr(image)
-    
-    if not result or not result[0]:
-        return {"status": "failed", "plate": "", "confidence": 0}
-    
-    # Lấy text và confidence từ kết quả OCR
-    text = "".join([res[1][0] for res in result[0]]).replace(" ", "").replace("-", "").replace(".", "")
-    confidence = sum([res[1][1] for res in result[0]]) / len(result[0]) * 100 if result[0] else 0
-    
-    # Validate định dạng
-    if validate_plate(text):
-        return {"status": "success", "plate": text, "confidence": round(confidence, 2)}
-    else:
-        return {"status": "failed", "plate": text, "confidence": round(confidence, 2), "error": "Định dạng không hợp lệ"}
+    if results and isinstance(results, list) and len(results) > 0:
+        first_result = results[0]
+        
+        # Xử lý format dictionary
+        if isinstance(first_result, dict):
+            rec_texts = first_result.get('rec_texts', [])
+            if rec_texts:
+                plate_text = "-".join(rec_texts)
+                
+        # Xử lý format list
+        elif isinstance(first_result, list): 
+            texts = [line[1][0] for line in first_result if isinstance(line, list) and len(line) == 2 and isinstance(line[1], tuple)]
+            plate_text = "-".join(texts)
+            
+    # Xóa khoảng trắng thừa
+    return plate_text.replace(" ", "")
