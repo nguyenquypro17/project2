@@ -39,7 +39,7 @@ npm --version
 
 ### 1️⃣ Clone hoặc tải về dự án
 ```bash
-cd "tài liệu đại học(landscape+long edge)/kì 2 năm 3/project 2"
+git clone https://github.com/nguyenquypro17/project2.git
 ```
 
 ### 2️⃣ Cài đặt Backend
