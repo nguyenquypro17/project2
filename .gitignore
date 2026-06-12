@@ -1,2 +1,13 @@
 __pycache__/
 *.pyc
+
+# Datasets
+Large-License-Plate-Detection-Dataset/
+Vietnam License plate.v4i.yolov8/
+
+# Model weights & training runs
+model/*.pt
+runs/
+
+# Local database
+backend/parking.db
